@@ -1,37 +1,30 @@
-﻿using MassTransit.Saga;
-using PizzaApi.MessageContracts;
-using PizzaApi.StateMachines;
+﻿using Topshelf;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Automatonymous;
-using MassTransit;
-using Hangfire;
-using Microsoft.Owin.Hosting;
-using MassTransit.NLogIntegration;
-using MassTransit.Logging;
-using NLog;
-using PizzaApi.MessageContracts;
-using MassTransit.BusConfigurators;
-using Hangfire.Mongo;
-using Topshelf;
-using Topshelf.Runtime;
+using Serilog;
+using Serilog.Filters;
 
 namespace PizzaApi.WindowsService
 {
-    class Program
+    internal class Program
     {
-        private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
-
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                //.WriteTo.Console(outputTemplate: "{Timestamp:HH:mm:ss}|{ThreadId:00}|{Level:u3}{EventId} {SourceContext}{Scope}|{Message}{NewLine}{Exception}")
+                .WriteTo.Trace()
+                .WriteTo.File(".\\..\\..\\..\\logs\\win-service.log",
+                        rollingInterval: RollingInterval.Day,
+                        outputTemplate: "{Timestamp:HH:mm:ss}|{ThreadId:00}|{Level:u3}{EventId} {SourceContext}{Scope}|{Message}{NewLine}{Exception}")
+                .Enrich.FromLogContext()
+                .MinimumLevel.Information()
+                .CreateLogger();
+
             HostFactory.Run(x =>
             {
                 x.Service<SagaService>();
 
-                x.UseNLog();
+                x.UseSerilog();
                 x.DependsOn("RabbitMQ");
 
                 x.RunAsLocalSystem();

@@ -1,24 +1,16 @@
-﻿using MassTransit.Saga;
+﻿using System;
+using Automatonymous;
+using GreenPipes;
+using Hangfire;
+using Hangfire.MemoryStorage;
+using MassTransit;
+using MassTransit.BusConfigurators;
+using MassTransit.Saga;
+using Microsoft.Owin.Hosting;
 using PizzaApi.MessageContracts;
 using PizzaApi.StateMachines;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Automatonymous;
-using MassTransit;
-using Hangfire;
-using Microsoft.Owin.Hosting;
-using MassTransit.NLogIntegration;
-using MassTransit.Logging;
-using NLog;
-using PizzaApi.MessageContracts;
-using MassTransit.BusConfigurators;
-using Hangfire.Mongo;
 using Topshelf;
-using Topshelf.Runtime;
-using Topshelf.Logging;
+using System.Linq;
 
 namespace PizzaApi.WindowsService
 {
@@ -42,19 +34,19 @@ namespace PizzaApi.WindowsService
             {
                 cfg.AddBusFactorySpecification(new BusObserverSpecification(() => _busObserver));
 
+                cfg.UseSerilog();
+                cfg.EnableWindowsPerformanceCounters();
                 cfg.ReceiveEndpoint(host, RabbitMqConstants.SagaQueue, e =>
                 {
-                    cfg.UseNLog(new LogFactory());
+                    e.UseConcurrencyLimit(16);
+                    e.PrefetchCount = 16;
 
-                    cfg.EnablePerformanceCounters();
-
-                    e.UseRetry(Retry.Interval(5, TimeSpan.FromSeconds(5)));
-
+                    e.UseRetry(x => x.Intervals(TimeSpan.FromSeconds(5)));
 
                     e.UseCircuitBreaker(cb =>
                     {
                         cb.TripThreshold = 15;
-                        cb.ResetInterval(TimeSpan.FromMinutes(5));
+                        cb.ResetInterval = TimeSpan.FromMinutes(5);
                         cb.TrackingPeriod = TimeSpan.FromMinutes(1);
                         cb.ActiveThreshold = 10;
                     });
@@ -76,11 +68,10 @@ namespace PizzaApi.WindowsService
 
             try
             {
-                _busHandle = _busControl.Start();
+                _busControl.Start();
                 Console.WriteLine("Saga active.. Press enter to exit");
 
-                GlobalConfiguration.Configuration.UseMongoStorage("mongodb://localhost:27017", "hangfire-masstransit");
-
+                GlobalConfiguration.Configuration.UseMemoryStorage();
                 hangfireServer = new BackgroundJobServer();
                 Console.WriteLine("Hangfire Server started. Press any key to exit...");
 
@@ -88,7 +79,7 @@ namespace PizzaApi.WindowsService
             }
             catch
             {
-                hangfireServer.Dispose();
+                hangfireServer?.Dispose();
                 _busControl.Stop();
 
                 throw;

@@ -1,13 +1,9 @@
-﻿using Automatonymous;
+﻿using System;
+using Automatonymous;
 using Hangfire;
-using PizzaApi.MessageContracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MassTransit.Logging;
 using Newtonsoft.Json;
+using PizzaApi.MessageContracts;
 
 namespace PizzaApi.StateMachines
 {
@@ -32,7 +28,6 @@ namespace PizzaApi.StateMachines
                 When(RegisterOrder)
                     .Then(context =>
                     {
-
                         //throw new ArgumentException("Test for monitoring sagas");
 
                         context.Instance.Created = context.Data.Timestamp;
@@ -106,11 +101,12 @@ namespace PizzaApi.StateMachines
 
         public State Registered { get; private set; }
         public State Approved { get; private set; }
+
         //Should add Closed state?
         public Event<IRegisterOrderCommand> RegisterOrder { get; private set; }
+
         public Event<IApproveOrderCommand> ApproveOrder { get; private set; }
         public Event<ICloseOrderCommand> CloseOrder { get; private set; }
         public Event<IRejectOrderCommand> RejectOrder { get; private set; }
-
     }
 }

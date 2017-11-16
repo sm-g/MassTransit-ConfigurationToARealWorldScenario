@@ -20,7 +20,7 @@ namespace PizzaApi.MessageContracts
             return Task.Run(() => Logger.Get("mongoCustomLog").Debug(() => "PostCreate"));
         }
 
-        public Task PostStart(IBus bus, Task busReady)
+        public Task PostStart(IBus bus, Task<BusReady> busReady)
         {
             return Task.Run(() => Logger.Get("mongoCustomLog").Info(() => "PostStart"));
         }
