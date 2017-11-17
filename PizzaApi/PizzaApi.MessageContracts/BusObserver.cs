@@ -12,42 +12,42 @@ namespace PizzaApi.MessageContracts
     {
         public Task CreateFaulted(Exception exception)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").InfoFormat("CreateFaulted"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").InfoFormat("CreateFaulted"));
         }
 
         public Task PostCreate(IBus bus)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").Debug(() => "PostCreate"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").Debug(() => "PostCreate"));
         }
 
         public Task PostStart(IBus bus, Task<BusReady> busReady)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").Info(() => "PostStart"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").Info(() => "PostStart"));
         }
 
         public Task PostStop(IBus bus)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").InfoFormat("PostStop"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").InfoFormat("PostStop"));
         }
 
         public Task PreStart(IBus bus)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").InfoFormat("PreStart"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").InfoFormat("PreStart"));
         }
 
         public Task PreStop(IBus bus)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").InfoFormat("PreStop"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").InfoFormat("PreStop"));
         }
 
         public Task StartFaulted(IBus bus, Exception exception)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").InfoFormat("StartFaulted"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").InfoFormat("StartFaulted"));
         }
 
         public Task StopFaulted(IBus bus, Exception exception)
         {
-            return Task.Run(() => Logger.Get("mongoCustomLog").InfoFormat("StopFaulted"));
+            return Task.Run(() => Logger.Get("sagaBusObserver").InfoFormat("StopFaulted"));
         }
     }
 }

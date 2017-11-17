@@ -3,6 +3,9 @@ using System;
 using System.Linq;
 using Serilog;
 using Serilog.Filters;
+using Topshelf.Runtime;
+using Microsoft.Extensions.DependencyInjection;
+using PizzaApi.StateMachines;
 
 namespace PizzaApi.WindowsService
 {
@@ -20,9 +23,11 @@ namespace PizzaApi.WindowsService
                 .MinimumLevel.Information()
                 .CreateLogger();
 
+            var serviceProvider = ConfigureServices();
+
             HostFactory.Run(x =>
             {
-                x.Service<SagaService>();
+                x.Service(() => serviceProvider.GetRequiredService<SagaService>());
 
                 x.UseSerilog();
                 x.DependsOn("RabbitMQ");
@@ -47,6 +52,14 @@ namespace PizzaApi.WindowsService
 
             //TODO:Enable Pause and continue (Stop the bus but don't stop the hangfire server)
             //Console.ReadLine();
+        }
+
+        private static ServiceProvider ConfigureServices()
+        {
+            return new ServiceCollection()
+                .AddScoped<SagaService>()
+                .AddScoped<OrderStateMachine>()
+                .BuildServiceProvider();
         }
     }
 }

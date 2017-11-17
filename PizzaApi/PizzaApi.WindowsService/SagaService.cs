@@ -17,15 +17,17 @@ namespace PizzaApi.WindowsService
     public class SagaService : ServiceControl
     {
         private IBusControl _busControl;
-        private BusHandle _busHandle;
-
         private IBusObserver _busObserver;
-
         private BackgroundJobServer hangfireServer;
+        private readonly OrderStateMachine _saga;
+
+        public SagaService(OrderStateMachine orderStateMachine)
+        {
+            _saga = orderStateMachine;
+        }
 
         public bool Start(HostControl hostControl)
         {
-            var saga = new OrderStateMachine();
             var repo = new InMemorySagaRepository<Order>();
 
             _busObserver = new BusObserver();
@@ -55,7 +57,7 @@ namespace PizzaApi.WindowsService
                     //    typeof(NotAcceptedStateMachineException)).Interval(10, TimeSpan.FromSeconds(5)));
                     //TODO: Create a custom filter policy for inner exceptions on Sagas: http://stackoverflow.com/questions/37041293/how-to-use-masstransits-retry-policy-with-sagas
 
-                    e.StateMachineSaga(saga, repo);
+                    e.StateMachineSaga(_saga, repo);
                 });
             });
 
@@ -79,8 +81,8 @@ namespace PizzaApi.WindowsService
             }
             catch
             {
-                hangfireServer?.Dispose();
                 _busControl.Stop();
+                hangfireServer?.Dispose();
 
                 throw;
             }
@@ -90,11 +92,10 @@ namespace PizzaApi.WindowsService
 
         public bool Stop(HostControl hostControl)
         {
-            if (_busHandle != null)
-                _busHandle.Stop();
+            // graceful shutdown
 
-            if (hangfireServer != null)
-                hangfireServer.Dispose();
+            _busControl?.Stop(TimeSpan.FromMinutes(3));
+            hangfireServer?.Dispose();
 
             return true;
         }
