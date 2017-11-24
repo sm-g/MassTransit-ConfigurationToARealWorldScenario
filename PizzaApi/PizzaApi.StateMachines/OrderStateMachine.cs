@@ -9,7 +9,7 @@ namespace PizzaApi.StateMachines
 {
     public class OrderStateMachine : MassTransitStateMachine<Order>
     {
-        public OrderStateMachine()
+        public OrderStateMachine(IServiceProvider serviceProvider)
         {
             Logger.Get<OrderStateMachine>().InfoFormat("OrderStateMachine ctor");
 
@@ -54,8 +54,8 @@ namespace PizzaApi.StateMachines
 
                         var delayedTimeInSeconds = context.Instance.EstimatedTime.Value * 60 * 0.65f;
                         Console.WriteLine("delayedTime (in seconds): " + delayedTimeInSeconds);
-                        BackgroundJob.Schedule(() => Console.WriteLine("Send notification to client: Pay attention please. Your order is near to be done!"),
-                                                        TimeSpan.FromSeconds(delayedTimeInSeconds));
+                        //BackgroundJob.Schedule(() => Console.WriteLine("Send notification to client: Pay attention please. Your order is near to be done!"),
+                        //                                TimeSpan.FromSeconds(delayedTimeInSeconds));
 
                         Logger.Get<OrderStateMachine>().InfoFormat("Approve Order {0}", JsonConvert.SerializeObject(context.Instance));
                     })

@@ -10,7 +10,7 @@ namespace PizzaApi.StateMachines
     public class Order : SagaStateMachineInstance
     {
         public Guid CorrelationId { get; set; }
-        public State CurrentState { get; set; }
+        public string CurrentState { get; set; }
 
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }

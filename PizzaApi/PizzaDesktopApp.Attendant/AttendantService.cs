@@ -4,6 +4,7 @@ using MassTransit;
 using PizzaApi.MessageContracts;
 using System.Linq;
 using Topshelf;
+using Topshelf.Logging;
 
 namespace PizzaDesktopApp.Attendant
 {
@@ -17,6 +18,7 @@ namespace PizzaDesktopApp.Attendant
             _busControl = BusConfigurator.ConfigureBus((cfg, host) =>
             {
                 cfg.UseSerilog();
+                cfg.UseRetry(x => x.Immediate(1));
                 cfg.ReceiveEndpoint(host, RabbitMqConstants.RegisterOrderServiceQueue, e =>
                 {
                     e.UseConcurrencyLimit(4);

@@ -37,6 +37,12 @@
     <Reference Include="Automatonymous, Version=3.6.0.77, Culture=neutral, PublicKeyToken=b800c4cfcdeea87b, processorArchitecture=MSIL">
       <HintPath>..\packages\Automatonymous.3.6.0\lib\net452\Automatonymous.dll</HintPath>
     </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
     <Reference Include="GreenPipes, Version=1.2.0.96, Culture=neutral, PublicKeyToken=b800c4cfcdeea87b, processorArchitecture=MSIL">
       <HintPath>..\packages\GreenPipes.1.2.0\lib\net452\GreenPipes.dll</HintPath>
     </Reference>
@@ -51,6 +57,9 @@
     </Reference>
     <Reference Include="MassTransit.AutomatonymousIntegration, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b8e0e9f2f1e657fa, processorArchitecture=MSIL">
       <HintPath>..\packages\MassTransit.Automatonymous.3.5.7\lib\net452\MassTransit.AutomatonymousIntegration.dll</HintPath>
+    </Reference>
+    <Reference Include="MassTransit.EntityFrameworkIntegration, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b8e0e9f2f1e657fa, processorArchitecture=MSIL">
+      <HintPath>..\packages\MassTransit.EntityFramework.3.5.7\lib\net452\MassTransit.EntityFrameworkIntegration.dll</HintPath>
     </Reference>
     <Reference Include="MassTransit.MongoDbIntegration, Version=3.3.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MassTransit.MongoDb.3.3.1\lib\net452\MassTransit.MongoDbIntegration.dll</HintPath>
@@ -73,15 +82,12 @@
     </Reference>
     <Reference Include="Microsoft.Owin, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
-      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Owin.Host.HttpListener, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Owin.Host.HttpListener.3.0.1\lib\net45\Microsoft.Owin.Host.HttpListener.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="MySql.Data, Version=6.10.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.6.10.4\lib\net452\MySql.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Owin.Hosting, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Owin.Hosting.3.0.1\lib\net45\Microsoft.Owin.Hosting.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="MySql.Data.Entity.EF6, Version=6.10.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.Entity.6.10.4\lib\net452\MySql.Data.Entity.EF6.dll</HintPath>
     </Reference>
     <Reference Include="NewId, Version=3.0.1.17, Culture=neutral, PublicKeyToken=b8e0e9f2f1e657fa, processorArchitecture=MSIL">
       <HintPath>..\packages\NewId.3.0.1\lib\net452\NewId.dll</HintPath>
@@ -114,6 +120,7 @@
       <HintPath>..\packages\Serilog.Sinks.Trace.2.1.0\lib\net45\Serilog.Sinks.Trace.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -134,7 +141,9 @@
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -148,6 +157,19 @@
       <Project>{91ec5f10-1964-4353-ac0c-574b314c2a83}</Project>
       <Name>PizzaApi.StateMachines</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="docs\MySqlCommand.xml" />
+    <Content Include="docs\MySqlCommandBuilder.xml" />
+    <Content Include="docs\MySqlConnection.xml" />
+    <Content Include="docs\MySqlConnectionStringBuilder.xml" />
+    <Content Include="docs\MySqlDataAdapter.xml" />
+    <Content Include="docs\MySqlDataReader.xml" />
+    <Content Include="docs\MySqlException.xml" />
+    <Content Include="docs\MySqlHelper.xml" />
+    <Content Include="docs\MySqlParameter.xml" />
+    <Content Include="docs\MySqlParameterCollection.xml" />
+    <Content Include="docs\MySqlTransaction.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
