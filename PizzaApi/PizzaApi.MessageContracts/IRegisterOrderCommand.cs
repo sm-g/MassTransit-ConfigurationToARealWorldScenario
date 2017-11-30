@@ -16,4 +16,20 @@ namespace PizzaApi.MessageContracts
         string CustomerPhone { get; }
         int PizzaID { get; }
     }
+
+    public interface IParallelWorkCommand
+    {
+        Guid CorrelationId { get; }
+        DateTime Timestamp { get; }
+
+        int OrderID { get; }
+    }
+
+    public interface INextWorkCommand
+    {
+        Guid CorrelationId { get; }
+        DateTime Timestamp { get; }
+
+        int OrderID { get; }
+    }
 }

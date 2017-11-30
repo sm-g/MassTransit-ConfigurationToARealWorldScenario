@@ -20,6 +20,8 @@ namespace PizzaApi.StateMachines
                                     context => context.Message.OrderID)
                         .SelectId(context => context.Message.CorrelationId));
 
+            Event(() => DoParallelWork, cc => cc.CorrelateById(context => context.Message.CorrelationId));
+            Event(() => DoNextWork, cc => cc.CorrelateById(context => context.Message.CorrelationId));
             Event(() => ApproveOrder, cc => cc.CorrelateById(context => context.Message.CorrelationId));
             Event(() => CloseOrder, cc => cc.CorrelateById(context => context.Message.CorrelationId));
             Event(() => RejectOrder, cc => cc.CorrelateById(context => context.Message.CorrelationId));
@@ -39,10 +41,25 @@ namespace PizzaApi.StateMachines
                         Logger.Get<OrderStateMachine>().InfoFormat("Register Order {0}", JsonConvert.SerializeObject(context.Instance));
                     })
                     .TransitionTo(Registered)
-                    .Publish(context => new OrderRegisteredEvent(context.Instance))
+                    //.Publish(context => new OrderRegisteredEvent(context.Instance))
+                    .Publish(context => true ? new ParallelWorkCommand(context.Instance) : throw new Exception())
+                    .Publish(context => new NextWorkCommand(context.Instance))
                 );
 
             During(Registered,
+                //Ignore(DoParallelWork),
+                When(DoParallelWork)
+                    .Then(context =>
+                    {
+                        Logger.Get<OrderStateMachine>().InfoFormat("Doing parallel work for Order {0}", context.Instance.OrderID);
+                    }),
+                When(DoNextWork)
+                    .Then(context =>
+                    {
+                        Logger.Get<OrderStateMachine>().InfoFormat("Doing next work for Order {0}", context.Instance.OrderID);
+                    })
+                    .Publish(context => new OrderRegisteredEvent(context.Instance))
+                    ,
                 When(ApproveOrder)
                     .Then(context =>
                     {
@@ -105,8 +122,41 @@ namespace PizzaApi.StateMachines
         //Should add Closed state?
         public Event<IRegisterOrderCommand> RegisterOrder { get; private set; }
 
+        public Event<IParallelWorkCommand> DoParallelWork { get; private set; }
+        public Event<INextWorkCommand> DoNextWork { get; private set; }
+
         public Event<IApproveOrderCommand> ApproveOrder { get; private set; }
         public Event<ICloseOrderCommand> CloseOrder { get; private set; }
         public Event<IRejectOrderCommand> RejectOrder { get; private set; }
+    }
+
+    public class ParallelWorkCommand : IParallelWorkCommand
+    {
+        public Guid CorrelationId { get; }
+        public DateTime Timestamp { get; }
+        public int OrderID { get; }
+
+        public ParallelWorkCommand(Order orderInstance)
+        {
+            CorrelationId = orderInstance.CorrelationId;
+            Timestamp = orderInstance.Updated;
+
+            OrderID = orderInstance.OrderID.Value;
+        }
+    }
+
+    public class NextWorkCommand : INextWorkCommand
+    {
+        public Guid CorrelationId { get; }
+        public DateTime Timestamp { get; }
+        public int OrderID { get; }
+
+        public NextWorkCommand(Order orderInstance)
+        {
+            CorrelationId = orderInstance.CorrelationId;
+            Timestamp = orderInstance.Updated;
+
+            OrderID = orderInstance.OrderID.Value;
+        }
     }
 }

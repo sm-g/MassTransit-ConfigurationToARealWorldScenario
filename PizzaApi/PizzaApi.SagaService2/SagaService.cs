@@ -46,6 +46,7 @@ namespace PizzaApi.WindowsService
 
                 cfg.UseSerilog();
                 cfg.EnableWindowsPerformanceCounters();
+
                 cfg.ReceiveEndpoint(host, RabbitMqConstants.SagaQueue, e =>
                 {
                     e.UseConcurrencyLimit(16);
