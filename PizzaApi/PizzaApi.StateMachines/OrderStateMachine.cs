@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Automatonymous;
 using Hangfire;
 using MassTransit.Logging;
@@ -42,8 +43,9 @@ namespace PizzaApi.StateMachines
                     })
                     .TransitionTo(Registered)
                     //.Publish(context => new OrderRegisteredEvent(context.Instance))
-                    .Publish(context => true ? new ParallelWorkCommand(context.Instance) : throw new Exception())
-                    .Publish(context => new NextWorkCommand(context.Instance))
+                    //.Publish(context => true ? new ParallelWorkCommand(context.Instance) : throw new Exception())
+                    .Publish(context => new QbdRequestCommand(context.Instance))
+                //.Publish(context => new NextWorkCommand(context.Instance))
                 );
 
             During(Registered,
@@ -51,8 +53,13 @@ namespace PizzaApi.StateMachines
                 When(DoParallelWork)
                     .Then(context =>
                     {
+                        // only StateMachine executes next, not Publish
+                        context.Raise(DoNextWork, new NextWorkCommand(context.Instance));
                         Logger.Get<OrderStateMachine>().InfoFormat("Doing parallel work for Order {0}", context.Instance.OrderID);
-                    }),
+                    })
+                    .Catch<ArgumentNullException>(ex => ex.Publish(context => new ParallelWorkCommand(context.Instance)))
+                    .Publish(context => new NextWorkCommand(context.Instance))
+                    ,
                 When(DoNextWork)
                     .Then(context =>
                     {
@@ -128,6 +135,8 @@ namespace PizzaApi.StateMachines
         public Event<IApproveOrderCommand> ApproveOrder { get; private set; }
         public Event<ICloseOrderCommand> CloseOrder { get; private set; }
         public Event<IRejectOrderCommand> RejectOrder { get; private set; }
+
+        public Event NoDataEvent { get; private set; }
     }
 
     public class ParallelWorkCommand : IParallelWorkCommand
@@ -152,6 +161,38 @@ namespace PizzaApi.StateMachines
         public int OrderID { get; }
 
         public NextWorkCommand(Order orderInstance)
+        {
+            CorrelationId = orderInstance.CorrelationId;
+            Timestamp = orderInstance.Updated;
+
+            OrderID = orderInstance.OrderID.Value;
+        }
+    }
+
+    public class QbdRequestCommand : IQbdRequestCommand
+    {
+        public Guid CorrelationId { get; }
+        public DateTime Timestamp { get; }
+        public int OrderID { get; }
+        public string FileId { get; }
+
+        public QbdRequestCommand(Order orderInstance)
+        {
+            CorrelationId = orderInstance.CorrelationId;
+            Timestamp = orderInstance.Updated;
+
+            OrderID = orderInstance.OrderID.Value;
+            FileId = "value_of_guid1";
+        }
+    }
+
+    public class QboRequestCommand : IQboRequestCommand
+    {
+        public Guid CorrelationId { get; }
+        public DateTime Timestamp { get; }
+        public int OrderID { get; }
+
+        public QboRequestCommand(Order orderInstance)
         {
             CorrelationId = orderInstance.CorrelationId;
             Timestamp = orderInstance.Updated;

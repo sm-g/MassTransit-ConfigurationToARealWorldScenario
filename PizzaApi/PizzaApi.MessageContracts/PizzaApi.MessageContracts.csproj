@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="BusConfigurator.cs" />
     <Compile Include="BusObserver.cs" />
+    <Compile Include="IRequestCommand.cs" />
     <Compile Include="LogConsumeObserver.cs" />
     <Compile Include="LogPublishObserver.cs" />
     <Compile Include="LogSendObserver.cs" />

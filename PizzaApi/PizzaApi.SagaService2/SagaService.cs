@@ -1,24 +1,44 @@
 ﻿using System;
 using Automatonymous;
 using GreenPipes;
-
-//using Hangfire;
-//using Hangfire.MemoryStorage;
 using MassTransit;
 using MassTransit.BusConfigurators;
 using MassTransit.Saga;
 using PizzaApi.MessageContracts;
 using PizzaApi.StateMachines;
 using Topshelf;
-using System.Linq;
-
 using MassTransit.EntityFrameworkIntegration.Saga;
 using MassTransit.EntityFrameworkIntegration;
-
-//using System.Data.Entity;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace PizzaApi.WindowsService
 {
+    public class QbHeadersFilter<T, TMessage> : IFilter<T>
+        where T : class, SendContext<TMessage>
+        where TMessage : class
+    {
+        public void Probe(ProbeContext context)
+        {
+            // empty
+        }
+
+        public Task Send(T context, IPipe<T> next)
+        {
+            if (context.Message is IQbdRequestCommand command)
+            {
+                context.Headers.Set("fileId", command.FileId);
+                context.Headers.Set("qbType", "qbd");
+            }
+            if (context.Message is IQboRequestCommand)
+            {
+                context.Headers.Set("qbType", "qbo");
+            }
+
+            return next.Send(context);
+        }
+    }
+
     public class SagaService : ServiceControl
     {
         private IBusControl _busControl;
@@ -45,7 +65,9 @@ namespace PizzaApi.WindowsService
                 cfg.AddBusFactorySpecification(new BusObserverSpecification(() => _busObserver));
 
                 cfg.UseSerilog();
-                cfg.EnableWindowsPerformanceCounters();
+                // cfg.EnableWindowsPerformanceCounters();
+
+                cfg.ConfigurePublish(x => x.UseSendFilter(new QbHeadersFilter<SendContext<IRequestCommand>, IRequestCommand>()));
 
                 cfg.ReceiveEndpoint(host, RabbitMqConstants.SagaQueue, e =>
                 {
@@ -63,10 +85,6 @@ namespace PizzaApi.WindowsService
                         cb.ActiveThreshold = 10;
                     });
 
-                    //e.UseRetry(Retry.Except(typeof(ArgumentException),
-                    //    typeof(NotAcceptedStateMachineException)).Interval(10, TimeSpan.FromSeconds(5)));
-                    //TODO: Create a custom filter policy for inner exceptions on Sagas: http://stackoverflow.com/questions/37041293/how-to-use-masstransits-retry-policy-with-sagas
-
                     e.StateMachineSaga(_saga, repo);
                 });
             });
@@ -74,9 +92,6 @@ namespace PizzaApi.WindowsService
             var consumeObserver = new LogConsumeObserver();
 
             _busControl.ConnectConsumeObserver(consumeObserver);
-
-            //TODO: See how to do versioning of messages (best practices)
-            //http://masstransit.readthedocs.io/en/master/overview/versioning.html
 
             try
             {
