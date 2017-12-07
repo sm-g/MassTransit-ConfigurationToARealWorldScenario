@@ -4,15 +4,16 @@ using GreenPipes;
 using MassTransit;
 using MassTransit.BusConfigurators;
 using MassTransit.Saga;
+using MassTransit.EntityFrameworkCoreIntegration;
+using MassTransit.EntityFrameworkCoreIntegration.Saga;
 using PizzaApi.MessageContracts;
 using PizzaApi.StateMachines;
 using Topshelf;
-using MassTransit.EntityFrameworkIntegration.Saga;
-using MassTransit.EntityFrameworkIntegration;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
-namespace PizzaApi.WindowsService
+namespace PizzaApi.SagaService2
 {
     public class QbHeadersFilter<T, TMessage> : IFilter<T>
         where T : class, SendContext<TMessage>
@@ -47,16 +48,25 @@ namespace PizzaApi.WindowsService
         //private BackgroundJobServer hangfireServer;
         private readonly OrderStateMachine _saga;
 
-        public SagaService(OrderStateMachine orderStateMachine)
+        private readonly IServiceProvider _serviceProvider;
+
+        public SagaService(OrderStateMachine orderStateMachine, IServiceProvider serviceProvider)
         {
             _saga = orderStateMachine;
+            _serviceProvider = serviceProvider;
+        }
+
+        private DbContext GetDbContext()
+        {
+            var options = new DbContextOptionsBuilder<SagaDbContext<Order, OrderMap>>()
+                .UseMySql("server=localhost;port=3306;database=pizza;uid=root;password=1111")
+                .Options;
+            return new SagaDbContext<Order, OrderMap>(options);
         }
 
         public bool Start(HostControl hostControl)
         {
-            SagaDbContextFactory sagaDbContextFactory =
-                () => new SagaDbContext<Order, OrderMap>("MyContext");
-            var repo = new EntityFrameworkSagaRepository<Order>(sagaDbContextFactory, optimistic: true);
+            var repo = new EntityFrameworkSagaRepository<Order>(GetDbContext, optimistic: true);
 
             _busObserver = new BusObserver();
 
@@ -86,6 +96,7 @@ namespace PizzaApi.WindowsService
                     });
 
                     e.StateMachineSaga(_saga, repo);
+                    e.LoadFrom(_serviceProvider);
                 });
             });
 
@@ -125,56 +136,4 @@ namespace PizzaApi.WindowsService
             return true;
         }
     }
-
-    public class OrderMap :
-        SagaClassMapping<Order>
-    {
-        public OrderMap()
-        {
-            ToTable("Order2");
-            Property(x => x.CurrentState)
-                .HasMaxLength(64);
-
-            Property(x => x.Created);
-            Property(x => x.Updated);
-
-            Property(x => x.CustomerName);
-            Property(x => x.CustomerPhone);
-            Property(x => x.EstimatedTime);
-            Property(x => x.OrderID);
-            Property(x => x.PizzaID);
-            Property(x => x.RejectedReasonPhrase);
-            Property(x => x.Status);
-
-            // CorrelationId already mapped in base class
-        }
-    }
-
-    //public class MyContext : DbContext
-    //{
-    //    public MyContext(string nameOrConnectionString)
-    //        : base(nameOrConnectionString)
-    //    {
-    //    }
-
-    //    public DbSet<Order> Orders { get; set; }
-
-    //    protected override void OnModelCreating(DbModelBuilder modelBuilder)
-    //    {
-    //        modelBuilder.Entity<Order>()
-    //            .ToTable("Order2")
-    //            .Property(x => x.CurrentState);
-
-    //        modelBuilder.Entity<Order>().Property(x => x.Created);
-    //        modelBuilder.Entity<Order>().Property(x => x.Updated);
-    //        modelBuilder.Entity<Order>().Property(x => x.CustomerName);
-    //        modelBuilder.Entity<Order>().Property(x => x.CustomerPhone);
-    //        modelBuilder.Entity<Order>().Property(x => x.EstimatedTime);
-    //        modelBuilder.Entity<Order>().Property(x => x.OrderID);
-    //        modelBuilder.Entity<Order>().Property(x => x.PizzaID);
-    //        modelBuilder.Entity<Order>().Property(x => x.RejectedReasonPhrase);
-    //        modelBuilder.Entity<Order>().Property(x => x.Status);
-    //        modelBuilder.Entity<Order>().Property(x => x.CorrelationId);
-    //    }
-    //}
 }

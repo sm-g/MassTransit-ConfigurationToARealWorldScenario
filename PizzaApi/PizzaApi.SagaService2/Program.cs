@@ -6,8 +6,10 @@ using Serilog.Filters;
 using Topshelf.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using PizzaApi.StateMachines;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
-namespace PizzaApi.WindowsService
+namespace PizzaApi.SagaService2
 {
     internal class Program
     {
@@ -23,7 +25,11 @@ namespace PizzaApi.WindowsService
                 .MinimumLevel.Information()
                 .CreateLogger();
 
-            var serviceProvider = ConfigureServices();
+            var contentRoot = Directory.GetCurrentDirectory();
+
+            var configuration = BuildConfiguration(contentRoot);
+
+            var serviceProvider = BuildServiceProvider(configuration);
 
             HostFactory.Run(x =>
             {
@@ -54,12 +60,24 @@ namespace PizzaApi.WindowsService
             //Console.ReadLine();
         }
 
-        private static ServiceProvider ConfigureServices()
+        public static IConfigurationRoot BuildConfiguration(string contentRoot)
         {
-            return new ServiceCollection()
-                .AddScoped<SagaService>()
-                .AddScoped<OrderStateMachine>()
-                .BuildServiceProvider();
+            return new ConfigurationBuilder()
+                .SetBasePath(contentRoot)
+                .AddJsonFile($"Configuration/appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+        }
+
+        public static ServiceProvider BuildServiceProvider(IConfigurationRoot configuration)
+        {
+            var serviceCollection = new ServiceCollection();
+
+            var startup = new Startup(configuration);
+            startup.ConfigureServices(serviceCollection);
+
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            return serviceProvider;
         }
     }
 }

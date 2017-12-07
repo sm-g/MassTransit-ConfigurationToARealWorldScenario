@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Automatonymous;
 using Hangfire;
 using MassTransit.Logging;
+using MassTransit.Saga;
 using Newtonsoft.Json;
 using PizzaApi.MessageContracts;
 
@@ -43,8 +44,8 @@ namespace PizzaApi.StateMachines
                     })
                     .TransitionTo(Registered)
                     //.Publish(context => new OrderRegisteredEvent(context.Instance))
-                    //.Publish(context => true ? new ParallelWorkCommand(context.Instance) : throw new Exception())
-                    .Publish(context => new QbdRequestCommand(context.Instance))
+                    .Publish(context => true ? new ParallelWorkCommand(context.Instance) : throw new Exception())
+                //.Publish(context => new QbdRequestCommand(context.Instance))
                 //.Publish(context => new NextWorkCommand(context.Instance))
                 );
 
