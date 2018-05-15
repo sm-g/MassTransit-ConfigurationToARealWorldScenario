@@ -44,6 +44,7 @@ namespace PizzaDesktopApp.Attendant
                     });
 
                     e.Consumer<OrderRegisteredConsumer>();
+                    e.Consumer<WantAllFaultsGimmeThem>();
                 });
             });
 

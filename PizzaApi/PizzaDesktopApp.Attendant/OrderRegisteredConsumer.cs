@@ -8,6 +8,20 @@ using System.Threading.Tasks;
 
 namespace PizzaDesktopApp.Attendant
 {
+    public class WantAllFaultsGimmeThem : IConsumer<Fault>
+    {
+        public async Task Consume(ConsumeContext<Fault> context)
+        {
+            var fault = context.Message;
+            if (context.TryGetMessage<Fault<IOrderRegisteredEvent>>(out var faultContext))
+            {
+                Console.WriteLine(faultContext);
+            }
+
+            Console.WriteLine();
+        }
+    }
+
     public class OrderRegisteredConsumer : IConsumer<IOrderRegisteredEvent>
     {
         public async Task Consume(ConsumeContext<IOrderRegisteredEvent> context)
@@ -22,6 +36,9 @@ namespace PizzaDesktopApp.Attendant
 
                 switch (attendantChoice.ToUpper())
                 {
+                    case "E":
+                        throw new DivideByZeroException("1/0");
+
                     case "Y":
                         Console.Write("What is the estimated time for this order (in minutes)? : ");
                         var estimatedTime = Console.ReadLine();
@@ -35,6 +52,7 @@ namespace PizzaDesktopApp.Attendant
                         Console.WriteLine(string.Format("PizzaApi server status code {0}. \n Content: {1}", response.StatusCode, responseContent));
 
                         break;
+
                     case "N":
                         Console.Write("Why do you want do reject this order? : ");
                         string reasonPhrase = "\"" + Console.ReadLine() + "\"";
@@ -45,6 +63,7 @@ namespace PizzaDesktopApp.Attendant
                         Console.WriteLine(string.Format("PizzaApi server status code {0}. \n Content: {1}", responseToReject.StatusCode, responseToRejectContent));
 
                         break;
+
                     default:
                         Console.WriteLine("Your awnser is invalid!");
                         break;
