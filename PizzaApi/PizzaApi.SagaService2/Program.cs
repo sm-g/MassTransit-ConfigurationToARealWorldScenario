@@ -1,13 +1,8 @@
-﻿using Topshelf;
-using System;
-using System.Linq;
-using Serilog;
-using Serilog.Filters;
-using Topshelf.Runtime;
-using Microsoft.Extensions.DependencyInjection;
-using PizzaApi.StateMachines;
+﻿using System.IO;
 using Microsoft.Extensions.Configuration;
-using System.IO;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Topshelf;
 
 namespace PizzaApi.SagaService2
 {

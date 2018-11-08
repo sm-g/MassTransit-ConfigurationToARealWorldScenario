@@ -3,43 +3,15 @@ using Automatonymous;
 using GreenPipes;
 using MassTransit;
 using MassTransit.BusConfigurators;
-using MassTransit.Saga;
 using MassTransit.EntityFrameworkCoreIntegration;
 using MassTransit.EntityFrameworkCoreIntegration.Saga;
+using Microsoft.EntityFrameworkCore;
 using PizzaApi.MessageContracts;
 using PizzaApi.StateMachines;
 using Topshelf;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 
 namespace PizzaApi.SagaService2
 {
-    public class QbHeadersFilter<T, TMessage> : IFilter<T>
-        where T : class, SendContext<TMessage>
-        where TMessage : class
-    {
-        public void Probe(ProbeContext context)
-        {
-            // empty
-        }
-
-        public Task Send(T context, IPipe<T> next)
-        {
-            if (context.Message is IQbdRequestCommand command)
-            {
-                context.Headers.Set("fileId", command.FileId);
-                context.Headers.Set("qbType", "qbd");
-            }
-            if (context.Message is IQboRequestCommand)
-            {
-                context.Headers.Set("qbType", "qbo");
-            }
-
-            return next.Send(context);
-        }
-    }
-
     public class SagaService : ServiceControl
     {
         private IBusControl _busControl;

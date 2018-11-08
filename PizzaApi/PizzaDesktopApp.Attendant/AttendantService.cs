@@ -1,13 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using GreenPipes;
 using MassTransit;
 using PizzaApi.MessageContracts;
-using System.Linq;
-using Topshelf;
-using Topshelf.Logging;
 using RabbitMQ.Client;
-using System.Text;
-using System.Collections.Generic;
+using Topshelf;
 
 namespace PizzaDesktopApp.Attendant
 {

@@ -1,27 +1,10 @@
-﻿using MassTransit;
-using PizzaApi.MessageContracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 using System.Threading.Tasks;
+using MassTransit;
+using PizzaApi.MessageContracts;
 
 namespace PizzaDesktopApp.Attendant
 {
-    public class WantAllFaultsGimmeThem : IConsumer<Fault>
-    {
-        public async Task Consume(ConsumeContext<Fault> context)
-        {
-            var fault = context.Message;
-            if (context.TryGetMessage<Fault<IOrderRegisteredEvent>>(out var faultContext))
-            {
-                Console.WriteLine(faultContext);
-            }
-
-            Console.WriteLine();
-        }
-    }
-
     public class OrderRegisteredConsumer : IConsumer<IOrderRegisteredEvent>
     {
         public async Task Consume(ConsumeContext<IOrderRegisteredEvent> context)
