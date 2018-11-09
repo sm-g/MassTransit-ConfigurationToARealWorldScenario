@@ -49,9 +49,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\PizzaApi.MessageContracts\PizzaApi.MessageContracts.csproj">
       <Project>{7763e5af-2fac-49a6-bb9b-dffb94d07371}</Project>
       <Name>PizzaApi.MessageContracts</Name>
@@ -62,7 +59,7 @@
       <Version>3.6.1</Version>
     </PackageReference>
     <PackageReference Include="Hangfire.Core">
-      <Version>1.6.17</Version>
+      <Version>1.6.21</Version>
     </PackageReference>
     <PackageReference Include="MassTransit">
       <Version>4.0.0.1334-develop</Version>
