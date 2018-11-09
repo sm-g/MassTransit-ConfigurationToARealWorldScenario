@@ -30,6 +30,7 @@ namespace PizzaApi.SagaService2
                 cfg.BusObserver(_busObserver);
 
                 cfg.UseSerilog();
+                cfg.UseDelayedExchangeMessageScheduler();
                 // cfg.EnableWindowsPerformanceCounters();
 
                 cfg.ConfigurePublish(x => x.UseSendFilter(new QbHeadersFilter<SendContext<IRequestCommand>, IRequestCommand>()));
@@ -38,6 +39,8 @@ namespace PizzaApi.SagaService2
                 {
                     e.UseConcurrencyLimit(2);
                     e.PrefetchCount = 2;
+
+                    e.UseInMemoryOutbox();
 
                     // required with optimistic concurrency
                     e.UseRetry(x => x.Intervals(TimeSpan.FromSeconds(5)));

@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AttendantService.cs" />
+    <Compile Include="DomainOperationRequestConsumer.cs" />
     <Compile Include="OrderRegisteredConsumer.cs" />
     <Compile Include="AttendantApplicationActions.cs" />
     <Compile Include="Program.cs" />

@@ -42,11 +42,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusConfigurator.cs" />
-    <Compile Include="BusObserver.cs" />
+    <Compile Include="INextWorkCommand.cs" />
+    <Compile Include="Observers\BusObserver.cs" />
+    <Compile Include="IDomainOperationRequest.cs" />
+    <Compile Include="IDomainOperationResponse.cs" />
     <Compile Include="IRequestCommand.cs" />
-    <Compile Include="LogConsumeObserver.cs" />
-    <Compile Include="LogPublishObserver.cs" />
-    <Compile Include="LogSendObserver.cs" />
+    <Compile Include="Observers\LogConsumeObserver.cs" />
+    <Compile Include="Observers\LogPublishObserver.cs" />
+    <Compile Include="Observers\LogSendObserver.cs" />
     <Compile Include="IApproveOrderCommand.cs" />
     <Compile Include="IClosedOrderEvent.cs" />
     <Compile Include="ICloseOrderCommand.cs" />

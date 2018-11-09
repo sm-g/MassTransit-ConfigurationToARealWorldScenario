@@ -2,9 +2,8 @@
 
 namespace PizzaApi.MessageContracts
 {
-    public interface ICloseOrderCommand
+    public interface ICloseOrderCommand : MassTransit.CorrelatedBy<Guid>
     {
-        Guid CorrelationId { get; }
         DateTime Timestamp { get; }
 
         int OrderID { get; }

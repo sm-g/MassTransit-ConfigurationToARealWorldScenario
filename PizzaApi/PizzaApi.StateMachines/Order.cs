@@ -18,5 +18,6 @@ namespace PizzaApi.StateMachines
         public int Status { get; set; }
         public string RejectedReasonPhrase { get; set; }
         public int PizzaID { get; set; }
+        public Guid? DomainOperationRequestId { get; set; }
     }
 }

@@ -9,5 +9,6 @@ CREATE TABLE `order2` (
   `EstimatedTime` int(11) DEFAULT NULL,
   `OrderID` int(11) DEFAULT NULL,
   `Status` int(11) DEFAULT NULL,
-  `PizzaID` int(11) NOT NULL
+  `PizzaID` int(11) NOT NULL,
+  `DomainOperationRequestId` char(16)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

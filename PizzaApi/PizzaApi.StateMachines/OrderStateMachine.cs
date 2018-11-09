@@ -8,7 +8,7 @@ namespace PizzaApi.StateMachines
 {
     public class OrderStateMachine : MassTransitStateMachine<Order>
     {
-        public OrderStateMachine(IServiceProvider serviceProvider)
+        public OrderStateMachine()
         {
             Logger.Get<OrderStateMachine>().InfoFormat("OrderStateMachine ctor");
 
@@ -19,11 +19,17 @@ namespace PizzaApi.StateMachines
                                     context => context.Message.OrderID)
                         .SelectId(context => context.Message.CorrelationId));
 
-            Event(() => DoParallelWork, cc => cc.CorrelateById(context => context.Message.CorrelationId));
-            Event(() => DoNextWork, cc => cc.CorrelateById(context => context.Message.CorrelationId));
-            Event(() => ApproveOrder, cc => cc.CorrelateById(context => context.Message.CorrelationId));
-            Event(() => CloseOrder, cc => cc.CorrelateById(context => context.Message.CorrelationId));
-            Event(() => RejectOrder, cc => cc.CorrelateById(context => context.Message.CorrelationId));
+            Event(() => DoNextWork);
+            Event(() => ApproveOrder);
+            Event(() => CloseOrder);
+            Event(() => RejectOrder);
+
+            Request(() => DomainOperationRequest, x => x.DomainOperationRequestId, cfg =>
+            {
+                cfg.ServiceAddress = new Uri(RabbitMqConstants.RabbitMqUri + RabbitMqConstants.DomainOperationRequestQueue);
+                cfg.SchedulingServiceAddress = new Uri(RabbitMqConstants.RabbitMqUri + RabbitMqConstants.DomainOperationRequestSchedulerQueue);
+                cfg.Timeout = TimeSpan.FromSeconds(5);
+            });
 
             Initially(
                 When(RegisterOrder)
@@ -41,30 +47,42 @@ namespace PizzaApi.StateMachines
                     })
                     .TransitionTo(Registered)
                     //.Publish(context => new OrderRegisteredEvent(context.Instance))
-                    .Publish(context => true ? new ParallelWorkCommand(context.Instance) : throw new Exception())
-                //.Publish(context => new QbdRequestCommand(context.Instance))
-                //.Publish(context => new NextWorkCommand(context.Instance))
+                    //.Publish(context => new QbdRequestCommand(context.Instance))
+                    .Publish(context => new NextWorkCommand(context.Instance))
                 );
 
             During(Registered,
-                //Ignore(DoParallelWork),
-                When(DoParallelWork)
-                    .Then(context =>
-                    {
-                        // only StateMachine executes next, not Publish
-                        context.Raise(DoNextWork, new NextWorkCommand(context.Instance));
-                        Logger.Get<OrderStateMachine>().InfoFormat("Doing parallel work for Order {0}", context.Instance.OrderID);
-                    })
-                    .Catch<ArgumentNullException>(ex => ex.Publish(context => new ParallelWorkCommand(context.Instance)))
-                    .Publish(context => new NextWorkCommand(context.Instance))
-                    ,
                 When(DoNextWork)
                     .Then(context =>
                     {
                         Logger.Get<OrderStateMachine>().InfoFormat("Doing next work for Order {0}", context.Instance.OrderID);
                     })
-                    .Publish(context => new OrderRegisteredEvent(context.Instance))
-                    ,
+                    .Request(DomainOperationRequest, context => new DomainOperationRequest(context.Instance))
+                    .TransitionTo(DomainOperationRequest.Pending)
+                );
+
+            During(DomainOperationRequest.Pending,
+                When(DomainOperationRequest.Completed)
+                    .Then(context =>
+                    {
+                        Logger.Get<OrderStateMachine>().InfoFormat("Request completed with answer {0}", context.Data.Answer);
+                    })
+                    .TransitionTo(Registered),
+                When(DomainOperationRequest.Faulted)
+                    .Then(context =>
+                    {
+                        Logger.Get<OrderStateMachine>().InfoFormat("Request faulted at {0}", context.Data.Timestamp);
+                    })
+                    .Finalize(),
+                When(DomainOperationRequest.TimeoutExpired)
+                    .Then(context =>
+                    {
+                        Logger.Get<OrderStateMachine>().InfoFormat("Request timeout expired at {0}", context.Data.Timestamp);
+                    })
+                    .TransitionTo(Timeouted)
+                );
+
+            During(Registered,
                 When(ApproveOrder)
                     .Then(context =>
                     {
@@ -123,33 +141,20 @@ namespace PizzaApi.StateMachines
 
         public State Registered { get; private set; }
         public State Approved { get; private set; }
+        public State Timeouted { get; private set; }
 
         //Should add Closed state?
         public Event<IRegisterOrderCommand> RegisterOrder { get; private set; }
 
-        public Event<IParallelWorkCommand> DoParallelWork { get; private set; }
         public Event<INextWorkCommand> DoNextWork { get; private set; }
 
         public Event<IApproveOrderCommand> ApproveOrder { get; private set; }
         public Event<ICloseOrderCommand> CloseOrder { get; private set; }
         public Event<IRejectOrderCommand> RejectOrder { get; private set; }
 
+        public Request<Order, IDomainOperationRequest, IDomainOperationResponse> DomainOperationRequest { get; private set; }
+
         public Event NoDataEvent { get; private set; }
-    }
-
-    public class ParallelWorkCommand : IParallelWorkCommand
-    {
-        public Guid CorrelationId { get; }
-        public DateTime Timestamp { get; }
-        public int OrderID { get; }
-
-        public ParallelWorkCommand(Order orderInstance)
-        {
-            CorrelationId = orderInstance.CorrelationId;
-            Timestamp = orderInstance.Updated;
-
-            OrderID = orderInstance.OrderID.Value;
-        }
     }
 
     public class NextWorkCommand : INextWorkCommand
@@ -197,5 +202,20 @@ namespace PizzaApi.StateMachines
 
             OrderID = orderInstance.OrderID.Value;
         }
+    }
+
+    internal class DomainOperationRequest : IDomainOperationRequest
+    {
+        public DomainOperationRequest(Order orderInstance)
+        {
+            CorrelationId = orderInstance.CorrelationId;
+            Timestamp = orderInstance.Updated;
+
+            Question = -1;
+        }
+
+        public Guid CorrelationId { get; }
+        public DateTime Timestamp { get; }
+        public int Question { get; }
     }
 }

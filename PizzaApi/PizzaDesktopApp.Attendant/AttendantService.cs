@@ -43,6 +43,14 @@ namespace PizzaDesktopApp.Attendant
                     e.Consumer<OrderRegisteredConsumer>();
                     e.Consumer<WantAllFaultsGimmeThem>();
                 });
+
+                cfg.ReceiveEndpoint(host, RabbitMqConstants.DomainOperationRequestQueue, e =>
+                {
+                    e.UseConcurrencyLimit(1);
+                    e.PrefetchCount = 1;
+
+                    e.Consumer<DomainOperationRequestConsumer>();
+                });
             });
 
             var consumeObserver = new LogConsumeObserver();
