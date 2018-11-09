@@ -1,11 +1,6 @@
 ﻿using System;
-using Automatonymous;
 using GreenPipes;
 using MassTransit;
-using MassTransit.BusConfigurators;
-using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.EntityFrameworkCoreIntegration.Saga;
-using Microsoft.EntityFrameworkCore;
 using PizzaApi.MessageContracts;
 using PizzaApi.StateMachines;
 using Topshelf;
@@ -18,33 +13,21 @@ namespace PizzaApi.SagaService2
         private IBusObserver _busObserver;
 
         //private BackgroundJobServer hangfireServer;
-        private readonly OrderStateMachine _saga;
 
         private readonly IServiceProvider _serviceProvider;
 
-        public SagaService(OrderStateMachine orderStateMachine, IServiceProvider serviceProvider)
+        public SagaService(IServiceProvider serviceProvider)
         {
-            _saga = orderStateMachine;
             _serviceProvider = serviceProvider;
-        }
-
-        private DbContext GetDbContext()
-        {
-            var options = new DbContextOptionsBuilder<SagaDbContext<Order, OrderMap>>()
-                .UseMySql("server=localhost;port=3306;database=pizza;uid=root;password=1111")
-                .Options;
-            return new SagaDbContext<Order, OrderMap>(options);
         }
 
         public bool Start(HostControl hostControl)
         {
-            var repo = new EntityFrameworkSagaRepository<Order>(GetDbContext, optimistic: true);
-
             _busObserver = new BusObserver();
 
             _busControl = BusConfigurator.ConfigureBus((cfg, host) =>
             {
-                cfg.AddBusFactorySpecification(new BusObserverSpecification(() => _busObserver));
+                cfg.BusObserver(_busObserver);
 
                 cfg.UseSerilog();
                 // cfg.EnableWindowsPerformanceCounters();
@@ -53,8 +36,8 @@ namespace PizzaApi.SagaService2
 
                 cfg.ReceiveEndpoint(host, RabbitMqConstants.SagaQueue, e =>
                 {
-                    e.UseConcurrencyLimit(16);
-                    e.PrefetchCount = 16;
+                    e.UseConcurrencyLimit(2);
+                    e.PrefetchCount = 2;
 
                     // required with optimistic concurrency
                     e.UseRetry(x => x.Intervals(TimeSpan.FromSeconds(5)));
@@ -67,8 +50,7 @@ namespace PizzaApi.SagaService2
                         cb.ActiveThreshold = 10;
                     });
 
-                    e.StateMachineSaga(_saga, repo);
-                    e.LoadFrom(_serviceProvider);
+                    e.StateMachineSaga<Order>(_serviceProvider);
                 });
             });
 
